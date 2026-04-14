@@ -633,7 +633,7 @@ function generatePDF() {
   // -- Bill To section --
   y = Math.max(y, ry) + 14;
   doc.setFillColor(220, 220, 220);
-  doc.rect(margin, y - 12, W - margin * 2, 20, 'F');
+  doc.rect(margin, y - 12, W - margin * 2, 44, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(30, 30, 30);
@@ -659,9 +659,8 @@ function generatePDF() {
   y += 18;
 
   // Header row
-  const cols = [margin, margin + 80, margin + 240, margin + 310];
-  const colWidths = [80, 160, 70, W - margin * 2 - 310];
-  const headers = ['Date', 'Site Name', 'Hours', 'Transport'];
+  const cols = [margin, margin + 90, margin + 280];
+  const headers = ['Date', 'Site Name', 'Hours'];
 
   doc.setFillColor(200, 200, 200);
   doc.rect(margin, y - 10, W - margin * 2, 18, 'F');
