@@ -366,8 +366,19 @@ z-index: 200;
     </div>
   </div>
   <div class="field">
+    <label>Postcode</label>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="postcodeInput" placeholder="e.g. UB6 0PL" style="text-transform:uppercase;flex:1;" oninput="this.value=this.value.toUpperCase()">
+      <button onclick="lookupPostcode()" style="padding:0 16px;background:var(--accent);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:&apos;DM Sans&apos;,sans-serif;cursor:pointer;white-space:nowrap;">Find</button>
+    </div>
+    <div id="postcode-status" style="font-size:12px;margin-top:6px;color:var(--muted);display:none;"></div>
+    <select id="addressSelect" style="margin-top:8px;display:none;" onchange="selectAddress(this.value)">
+      <option value="">— Select your address —</option>
+    </select>
+  </div>
+  <div class="field">
     <label>Address</label>
-    <input type="text" id="address" placeholder="e.g. 1 Example Street, AB1 2CD">
+    <input type="text" id="address" placeholder="Auto-filled or type manually">
   </div>
   <div class="field">
     <label>UTR Number</label>
@@ -503,6 +514,57 @@ function renderRows() {
 function updateTotalHours() {
   const total = rows.reduce((s, r) => s + (parseFloat(r.hours) || 0), 0);
   document.getElementById('totalHoursBadge').textContent = total + ' hrs';
+}
+
+async function lookupPostcode() {
+  const pc = document.getElementById('postcodeInput').value.trim().replace(/ /g,'');
+  const status = document.getElementById('postcode-status');
+  const select = document.getElementById('addressSelect');
+
+  if (!pc) return;
+
+  status.style.display = 'block';
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Searching...';
+  select.style.display = 'none';
+
+  try {
+    // Step 1: validate postcode and get lat/lon
+    const res = await fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(pc));
+    const data = await res.json();
+
+    if (data.status !== 200) {
+      status.style.color = 'var(--accent2)';
+      status.textContent = 'Postcode not found. Please check and try again.';
+      return;
+    }
+
+    const { latitude, longitude, postcode } = data.result;
+
+    // Step 2: use getaddress.io free-tier alternative — build address from postcode data
+    // Since free address-level lookup needs an API key, we build from postcodes.io data
+    // and let user type house number
+    const town = data.result.admin_ward || data.result.parish || '';
+    const district = data.result.admin_district || '';
+    const county = data.result.admin_county || '';
+
+    // Build a clean suggested address
+    const parts = [district, county].filter(Boolean);
+    const suggestion = parts.join(', ') + (parts.length ? ', ' : '') + postcode;
+
+    document.getElementById('address').value = suggestion;
+    status.style.color = 'var(--success)';
+    status.textContent = '✓ Found: ' + postcode + ' — edit the address field above to add your house number/street.';
+    select.style.display = 'none';
+
+  } catch(e) {
+    status.style.color = 'var(--accent2)';
+    status.textContent = 'Error looking up postcode. Check your connection.';
+  }
+}
+
+function selectAddress(val) {
+  if (val) document.getElementById('address').value = val;
 }
 
 function validateDOB(input) {
