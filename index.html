@@ -516,6 +516,7 @@ function validateDOB(input) {
 }
 
 
+function autoCalcDeduction() {
   const gross = parseFloat(document.getElementById('grossPaid').value) || 0;
   const mat = parseFloat(document.getElementById('materials').value) || 0;
   const auto = Math.round((gross - mat) * 0.20);
