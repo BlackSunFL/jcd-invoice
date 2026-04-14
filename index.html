@@ -531,52 +531,62 @@ function updateTotalHours() {
 }
 
 async function lookupPostcode() {
-  const pc = document.getElementById('postcodeInput').value.trim().replace(/ /g,'');
+  const raw = document.getElementById('postcodeInput').value.trim();
+  const pc = raw.replace(/ /g, '').toUpperCase();
   const status = document.getElementById('postcode-status');
-  const select = document.getElementById('addressSelect');
 
-  if (!pc) return;
+  if (!pc) {
+    status.style.display = 'block';
+    status.style.color = 'var(--accent2)';
+    status.textContent = 'Please enter a postcode first.';
+    return;
+  }
 
   status.style.display = 'block';
   status.style.color = 'var(--muted)';
   status.textContent = 'Searching...';
-  select.style.display = 'none';
 
   try {
-    // Step 1: validate postcode and get lat/lon
-    const res = await fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(pc));
-    const data = await res.json();
+    const res = await fetch('https://api.postcodes.io/postcodes/' + pc, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
 
-    if (data.status !== 200) {
+    if (!res.ok) {
       status.style.color = 'var(--accent2)';
       status.textContent = 'Postcode not found. Please check and try again.';
       return;
     }
 
-    const { latitude, longitude, postcode } = data.result;
+    const data = await res.json();
 
-    // Step 2: use getaddress.io free-tier alternative — build address from postcode data
-    // Since free address-level lookup needs an API key, we build from postcodes.io data
-    // and let user type house number
-    const town = data.result.admin_ward || data.result.parish || '';
-    const district = data.result.admin_district || '';
-    const county = data.result.admin_county || '';
+    if (!data.result) {
+      status.style.color = 'var(--accent2)';
+      status.textContent = 'Postcode not found. Please check and try again.';
+      return;
+    }
 
-    // Build a clean suggested address
-    const parts = [district, county].filter(Boolean);
-    const suggestion = parts.join(', ') + (parts.length ? ', ' : '') + postcode;
+    const r = data.result;
+    const postcode = r.postcode || raw.toUpperCase();
+    const street = r.thoroughfare || '';
+    const ward = r.admin_ward || '';
+    const district = r.admin_district || '';
+    const county = r.admin_county || '';
+
+    // Build address suggestion — user adds house number manually
+    const parts = [street, ward, district, county].filter(Boolean);
+    const suggestion = parts.join(', ') + ', ' + postcode;
 
     document.getElementById('address').value = suggestion;
     status.style.color = 'var(--success)';
-    status.textContent = '✓ Found: ' + postcode + ' — edit the address field above to add your house number/street.';
-    select.style.display = 'none';
+    status.textContent = '✓ ' + postcode + ' found! Add your house number at the start of the address.';
 
   } catch(e) {
     status.style.color = 'var(--accent2)';
-    status.textContent = 'Error looking up postcode. Check your connection.';
+    status.textContent = 'Could not connect. Check your internet and try again.';
+    console.error('Postcode lookup error:', e);
   }
 }
-
 function selectAddress(val) {
   if (val) document.getElementById('address').value = val;
 }
