@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JCD Invoice Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bg: #0e0e10;
+–surface: #18181b;
+–border: #2a2a2f;
+–accent: #8b3a3a;
+–accent2: #c45c5c;
+–text: #f0ede8;
+–muted: #7a7a85;
+–input-bg: #111114;
+–success: #4caf82;
+}
+
+body {
+font-family: ‘DM Sans’, sans-serif;
+background: var(–bg);
+color: var(–text);
+min-height: 100vh;
+padding: 0;
+}
+
+.app-shell {
+max-width: 480px;
+margin: 0 auto;
+padding: 0 0 80px 0;
+min-height: 100vh;
+}
+
+.header {
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+padding: 20px 24px 16px;
+position: sticky;
+top: 0;
+z-index: 10;
+display: flex;
+align-items: center;
+gap: 14px;
+}
+
+.header-logo {
+width: 40px;
+height: 40px;
+background: var(–accent);
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-family: ‘DM Serif Display’, serif;
+font-size: 15px;
+color: white;
+letter-spacing: 1px;
+flex-shrink: 0;
+}
+
+.header-text h1 {
+font-family: ‘DM Serif Display’, serif;
+font-size: 18px;
+color: var(–text);
+letter-spacing: 0.3px;
+}
+
+.header-text p {
+font-size: 12px;
+color: var(–muted);
+margin-top: 1px;
+}
+
+.content { padding: 24px 20px; }
+
+.section {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 20px;
+margin-bottom: 16px;
+}
+
+.section-title {
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 1.2px;
+text-transform: uppercase;
+color: var(–accent2);
+margin-bottom: 16px;
+}
+
+.field {
+margin-bottom: 14px;
+}
+
+.field:last-child { margin-bottom: 0; }
+
+label {
+display: block;
+font-size: 12px;
+color: var(–muted);
+font-weight: 500;
+margin-bottom: 6px;
+letter-spacing: 0.2px;
+}
+
+input, select {
+width: 100%;
+background: var(–input-bg);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 12px 14px;
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 15px;
+outline: none;
+transition: border-color 0.2s;
+-webkit-appearance: none;
+}
+
+input:focus, select:focus {
+border-color: var(–accent2);
+}
+
+input::placeholder { color: var(–muted); opacity: 0.6; }
+
+.row-2 {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+}
+
+/* Timesheet table */
+.ts-header {
+display: grid;
+grid-template-columns: 70px 1fr 60px;
+gap: 8px;
+padding: 0 0 8px 0;
+border-bottom: 1px solid var(–border);
+margin-bottom: 10px;
+}
+
+.ts-header span {
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.8px;
+text-transform: uppercase;
+color: var(–muted);
+}
+
+.ts-row {
+display: grid;
+grid-template-columns: 70px 1fr 60px;
+gap: 8px;
+margin-bottom: 8px;
+align-items: center;
+}
+
+.ts-row input {
+padding: 9px 10px;
+font-size: 14px;
+}
+
+.ts-row .date-cell {
+font-size: 13px;
+color: var(–muted);
+padding: 9px 0;
+}
+
+.add-row-btn {
+width: 100%;
+padding: 10px;
+background: transparent;
+border: 1px dashed var(–border);
+border-radius: 10px;
+color: var(–muted);
+font-size: 13px;
+cursor: pointer;
+margin-top: 8px;
+font-family: ‘DM Sans’, sans-serif;
+transition: all 0.2s;
+}
+
+.add-row-btn:hover {
+border-color: var(–accent2);
+color: var(–accent2);
+}
+
+.remove-btn {
+width: 24px;
+height: 24px;
+border-radius: 6px;
+background: transparent;
+border: 1px solid var(–border);
+color: var(–muted);
+font-size: 16px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+line-height: 1;
+font-family: ‘DM Sans’, sans-serif;
+}
+
+.remove-btn:hover { background: #3a1414; border-color: #c45c5c; color: #c45c5c; }
+
+/* Summary */
+.summary-line {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 10px 0;
+border-bottom: 1px solid var(–border);
+font-size: 14px;
+}
+
+.summary-line:last-child { border-bottom: none; }
+.summary-line.total { font-weight: 600; font-size: 16px; color: var(–success); }
+.summary-line span:first-child { color: var(–muted); }
+.summary-line.total span:first-child { color: var(–text); }
+
+/* Generate button */
+.generate-btn {
+width: calc(100% - 40px);
+position: fixed;
+bottom: 20px;
+left: 50%;
+transform: translateX(-50%);
+max-width: 440px;
+padding: 16px;
+background: var(–accent);
+color: white;
+border: none;
+border-radius: 14px;
+font-size: 16px;
+font-weight: 600;
+font-family: ‘DM Sans’, sans-serif;
+cursor: pointer;
+transition: all 0.2s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+box-shadow: 0 4px 24px rgba(139,58,58,0.4);
+z-index: 100;
+}
+
+.generate-btn:hover { background: var(–accent2); transform: translateX(-50%) translateY(-1px); }
+.generate-btn:active { transform: translateX(-50%) translateY(0); }
+
+.total-hours-badge {
+background: var(–accent);
+color: white;
+padding: 3px 10px;
+border-radius: 20px;
+font-size: 13px;
+font-weight: 600;
+}
+
+.ts-row-wrap {
+display: grid;
+grid-template-columns: 70px 1fr 50px 28px;
+gap: 8px;
+margin-bottom: 8px;
+align-items: center;
+}
+
+.ts-header-4 {
+display: grid;
+grid-template-columns: 70px 1fr 50px 28px;
+gap: 8px;
+padding-bottom: 8px;
+border-bottom: 1px solid var(–border);
+margin-bottom: 10px;
+}
+
+.ts-header-4 span {
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.8px;
+text-transform: uppercase;
+color: var(–muted);
+}
+
+.toast {
+position: fixed;
+bottom: 90px;
+left: 50%;
+transform: translateX(-50%);
+background: var(–success);
+color: #0e1a12;
+padding: 12px 24px;
+border-radius: 30px;
+font-weight: 600;
+font-size: 14px;
+opacity: 0;
+transition: opacity 0.3s;
+pointer-events: none;
+z-index: 200;
+}
+
+.toast.show { opacity: 1; }
+</style>
+
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="header">
+    <div class="header-logo">JCD</div>
+    <div class="header-text">
+      <h1>Invoice Generator</h1>
+      <p>J.C.D Group Ltd — CIS Subcontractor</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+```
+<!-- Payment Info -->
+<div class="section">
+  <div class="section-title">Invoice Details</div>
+
+  <div class="row-2">
+    <div class="field">
+      <label>Payment Date</label>
+      <input type="date" id="paymentDate">
+    </div>
+    <div class="field">
+      <label>Invoice Number</label>
+      <input type="text" id="invoiceNumber" placeholder="e.g. 001">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Month</label>
+    <input type="text" id="invoiceMonth" placeholder="e.g. April">
+  </div>
+</div>
+
+<!-- Personal Info (pre-filled) -->
+<div class="section">
+  <div class="section-title">Your Details</div>
+
+  <div class="field">
+    <label>Full Name</label>
+    <input type="text" id="name" placeholder="e.g. John Smith">
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label>D.O.B.</label>
+      <input type="text" id="dob" placeholder="DD/MM/YYYY">
+    </div>
+    <div class="field">
+      <label>NI Number</label>
+      <input type="text" id="nino" placeholder="e.g. AB 12 34 56 C">
+    </div>
+  </div>
+  <div class="field">
+    <label>Address</label>
+    <input type="text" id="address" placeholder="e.g. 1 Example Street, AB1 2CD">
+  </div>
+  <div class="field">
+    <label>UTR Number</label>
+    <input type="text" id="utr" placeholder="10-digit UTR">
+  </div>
+  <div class="field">
+    <label>Phone Number</label>
+    <input type="text" id="phone" placeholder="e.g. 07700 000000">
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label>Sort Code</label>
+      <input type="text" id="sortCode" placeholder="00-00-00">
+    </div>
+    <div class="field">
+      <label>Account No.</label>
+      <input type="text" id="accountNo" placeholder="8-digit number">
+    </div>
+  </div>
+</div>
+
+<!-- Timesheet -->
+<div class="section">
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>Timesheet</span>
+    <span class="total-hours-badge" id="totalHoursBadge">0 hrs</span>
+  </div>
+
+  <div class="ts-header-4">
+    <span>Date</span>
+    <span>Site</span>
+    <span>Hours</span>
+    <span></span>
+  </div>
+
+  <div id="timesheetRows"></div>
+
+  <button class="add-row-btn" onclick="addRow()">+ Add Day</button>
+</div>
+
+<!-- Payment Summary -->
+<div class="section">
+  <div class="section-title">Payment Summary</div>
+
+  <div class="field">
+    <label>Gross Amount (£)</label>
+    <input type="number" id="grossPaid" placeholder="e.g. 1000" oninput="autoCalcDeduction()">
+  </div>
+  <div class="field">
+    <label>Materials Cost (£)</label>
+    <input type="number" id="materials" placeholder="e.g. 0" oninput="updateSummary()">
+  </div>
+  <div class="field">
+    <label style="display:flex;justify-content:space-between;align-items:center;">
+      <span>CIS Deduction (£)</span>
+      <span style="font-size:11px;color:var(--accent2);font-weight:600;">AUTO 20%</span>
+    </label>
+    <input type="number" id="deduction" placeholder="Auto-calculated at 20%" oninput="updateSummary()" style="color:var(--accent2);">
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="summary-line">
+      <span>Gross Paid</span>
+      <span id="s-gross">£0</span>
+    </div>
+    <div class="summary-line">
+      <span>Less Materials</span>
+      <span id="s-mat">£0</span>
+    </div>
+    <div class="summary-line">
+      <span>Amount Deducted</span>
+      <span id="s-ded">£0</span>
+    </div>
+    <div class="summary-line total">
+      <span>Total Net Paid</span>
+      <span id="s-net">£0</span>
+    </div>
+  </div>
+</div>
+
+<div style="height:60px;"></div>
+```
+
+  </div>
+
+  <button class="generate-btn" onclick="generatePDF()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    Generate PDF Invoice
+  </button>
+
+</div>
+
+<div class="toast" id="toast">✓ PDF Downloaded!</div>
+
+<script>
+// ---- State ----
+let rows = [];
+
+function addRow(date='', site='', hours='') {
+  const id = Date.now() + Math.random();
+  rows.push({ id, date, site, hours });
+  renderRows();
+}
+
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  renderRows();
+}
+
+function updateRow(id, field, val) {
+  const r = rows.find(r => r.id === id);
+  if (r) r[field] = val;
+  updateTotalHours();
+}
+
+function renderRows() {
+  const container = document.getElementById('timesheetRows');
+  container.innerHTML = '';
+  rows.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'ts-row-wrap';
+    div.innerHTML = `
+      <input type="date" value="${row.date}" onchange="updateRow(${row.id},'date',this.value)">
+      <input type="text" placeholder="Site name" value="${row.site}" oninput="updateRow(${row.id},'site',this.value)">
+      <input type="number" placeholder="hrs" value="${row.hours}" oninput="updateRow(${row.id},'hours',this.value)">
+      <button class="remove-btn" onclick="removeRow(${row.id})">×</button>
+    `;
+    container.appendChild(div);
+  });
+  updateTotalHours();
+}
+
+function updateTotalHours() {
+  const total = rows.reduce((s, r) => s + (parseFloat(r.hours) || 0), 0);
+  document.getElementById('totalHoursBadge').textContent = total + ' hrs';
+}
+
+function autoCalcDeduction() {
+  const gross = parseFloat(document.getElementById('grossPaid').value) || 0;
+  const mat = parseFloat(document.getElementById('materials').value) || 0;
+  const auto = Math.round((gross - mat) * 0.20);
+  document.getElementById('deduction').value = auto > 0 ? auto : '';
+  updateSummary();
+}
+
+function updateSummary() {
+  const gross = parseFloat(document.getElementById('grossPaid').value) || 0;
+  const mat = parseFloat(document.getElementById('materials').value) || 0;
+  const ded = parseFloat(document.getElementById('deduction').value) || 0;
+  const net = gross - mat - ded;
+  document.getElementById('s-gross').textContent = '£' + gross.toFixed(0);
+  document.getElementById('s-mat').textContent = '£' + mat.toFixed(0);
+  document.getElementById('s-ded').textContent = '£' + ded.toFixed(0);
+  document.getElementById('s-net').textContent = '£' + Math.max(0, net).toFixed(0);
+}
+
+// Pre-fill today's date
+document.getElementById('paymentDate').valueAsDate = new Date();
+
+// Start with one empty row
+addRow();
+
+updateSummary();
+
+// ---- PDF Generation ----
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+  const W = doc.internal.pageSize.getWidth();
+  const margin = 45;
+  const col2 = W / 2 + 10;
+
+  // -- Header: INVOICE title --
+  doc.setFontSize(36);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text('INVOICE', margin, 70);
+
+  // -- JCD logo area (rectangle placeholder) --
+  doc.setFillColor(100, 40, 40);
+  doc.roundedRect(W - margin - 100, 20, 100, 55, 4, 4, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('J.C.D. GROUP', W - margin - 50, 51, { align: 'center' });
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Building Excellence', W - margin - 50, 65, { align: 'center' });
+
+  // divider
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.line(margin, 90, W - margin, 90);
+
+  // -- Personal details table --
+  const fields = [
+    ['Name', get('name')],
+    ['D.O.B.', get('dob')],
+    ['Address', get('address')],
+    ['UTR Number', get('utr')],
+    ['NI Number', get('nino')],
+  ];
+
+  let y = 108;
+  doc.setFontSize(9);
+
+  fields.forEach(([label, value]) => {
+    // Grey box
+    doc.setFillColor(235, 235, 235);
+    doc.rect(margin, y - 12, 90, 20, 'F');
+    doc.setTextColor(60, 60, 60);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, margin + 5, y);
+
+    doc.setFillColor(248, 248, 248);
+    doc.rect(margin + 90, y - 12, 140, 20, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(value, margin + 95, y);
+
+    y += 22;
+  });
+
+  // -- Right side: Payment date & invoice number --
+  let ry = 108;
+  const rdx = col2 + 40;
+
+  const rightFields = [
+    ['Payment Date', formatDisplayDate(get('paymentDate'))],
+    ['Invoice Number', get('invoiceNumber')],
+    ['Month', get('invoiceMonth')],
+  ];
+
+  rightFields.forEach(([label, value]) => {
+    doc.setFillColor(235, 235, 235);
+    doc.rect(rdx, ry - 12, 100, 20, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    doc.text(label, rdx + 5, ry);
+
+    doc.setFillColor(248, 248, 248);
+    doc.rect(rdx + 100, ry - 12, 90, 20, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(value, rdx + 105, ry);
+
+    ry += 22;
+  });
+
+  // -- Bill To section --
+  y = Math.max(y, ry) + 14;
+  doc.setFillColor(220, 220, 220);
+  doc.rect(margin, y - 12, W - margin * 2, 20, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text('BILL TO', margin + 5, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('J.C.D Group Ltd', margin + 70, y);
+  doc.text('Phone: 01494 422936', margin + 70, y + 12);
+  doc.text('E-mail: invoices@jcdryliningltd.co.uk', margin + 70, y + 24);
+  doc.text('Address: 1st Floor Office, Sovereign Park, Cleveland Way,', col2 + 20, y);
+  doc.text('Hemel Hempstead Industrial Estate, Hertfordshire, HP2 7DA', col2 + 20, y + 12);
+
+  y += 45;
+
+  // -- Timesheet section --
+  doc.setFillColor(235, 235, 235);
+  doc.rect(margin, y - 12, W - margin * 2, 22, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(30, 30, 30);
+  doc.text('TIMESHEET', W / 2, y + 1, { align: 'center' });
+
+  y += 18;
+
+  // Header row
+  const cols = [margin, margin + 80, margin + 240, margin + 310];
+  const colWidths = [80, 160, 70, W - margin * 2 - 310];
+  const headers = ['Date', 'Site Name', 'Hours', 'Transport'];
+
+  doc.setFillColor(200, 200, 200);
+  doc.rect(margin, y - 10, W - margin * 2, 18, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  headers.forEach((h, i) => {
+    doc.text(h, cols[i] + 4, y + 2);
+  });
+  y += 18;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  let totalH = 0;
+  rows.forEach((row, idx) => {
+    const bg = idx % 2 === 0 ? [255,255,255] : [248,248,248];
+    doc.setFillColor(...bg);
+    doc.rect(margin, y - 10, W - margin * 2, 16, 'F');
+    doc.setTextColor(40, 40, 40);
+
+    const displayDate = formatDisplayDate(row.date);
+    doc.text(displayDate, cols[0] + 4, y);
+    doc.text(row.site || '', cols[1] + 4, y);
+    doc.text(String(row.hours || ''), cols[2] + 4, y);
+    y += 16;
+    totalH += parseFloat(row.hours) || 0;
+  });
+
+  // Total hours row
+  doc.setFillColor(220, 220, 220);
+  doc.rect(margin, y - 10, W - margin * 2, 18, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('TOTAL HOURS', cols[0] + 4, y + 1);
+  doc.text(String(totalH), cols[2] + 4, y + 1);
+  y += 24;
+
+  // -- Contact / bank details --
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Telephone: ' + get('phone'), margin, y);
+  doc.text('Sort Code: ' + get('sortCode') + '   Account No.: ' + get('accountNo'), margin, y + 13);
+  y += 30;
+
+  // -- Deduction Statement --
+  doc.setFillColor(230, 230, 230);
+  doc.rect(margin, y - 12, W - margin * 2, 22, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(30, 30, 30);
+  doc.text('DEDUCTION STATEMENT AND PAYMENT', W / 2, y + 1, { align: 'center' });
+  y += 22;
+
+  const gross = parseFloat(get('grossPaid')) || 0;
+  const mat = parseFloat(get('materials')) || 0;
+  const ded = parseFloat(get('deduction')) || 0;
+  const net = gross - mat - ded;
+
+  const payRows = [
+    ['Gross paid', '£' + gross.toFixed(0)],
+    ['Less cost of materials', '£' + mat.toFixed(0)],
+    ['Amount deducted', '£' + ded.toFixed(0)],
+    ['Total net paid', '£' + Math.max(0, net).toFixed(0)],
+  ];
+
+  const halfW = (W - margin * 2) / 2;
+
+  payRows.forEach(([label, value], i) => {
+    const isTotal = i === payRows.length - 1;
+    doc.setFillColor(isTotal ? 180 : 235, isTotal ? 180 : 235, isTotal ? 180 : 235);
+    doc.rect(margin + halfW / 2, y - 10, halfW * 1.3, 20, 'F');
+    doc.setFont('helvetica', isTotal ? 'bold' : 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text(label, margin + halfW / 2 + 5, y + 2);
+    doc.text(value, margin + halfW / 2 + halfW * 1.3 - 5, y + 2, { align: 'right' });
+    y += 24;
+  });
+
+  // -- Footer --
+  y += 10;
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, W - margin, y);
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('CIS Subcontractor Invoice — ' + get('name'), W / 2, y + 12, { align: 'center' });
+
+  const filename = `Invoice_${(get('name') || 'Subcontractor').replace(/ /g,'_')}_${formatDisplayDate(get('paymentDate')).replace(/\//g,'-')}.pdf`;
+  doc.save(filename);
+
+  // Toast
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function get(id) {
+  return (document.getElementById(id)?.value || '').trim();
+}
+
+function formatDisplayDate(iso) {
+  if (!iso) return '';
+  const parts = iso.split('-');
+  if (parts.length !== 3) return iso;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+</script>
+
+</body>
+</html>
