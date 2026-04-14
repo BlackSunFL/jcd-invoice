@@ -357,7 +357,8 @@ z-index: 200;
   <div class="row-2">
     <div class="field">
       <label>D.O.B.</label>
-      <input type="text" id="dob" placeholder="DD/MM/YYYY">
+      <input type="date" id="dob" max="2008-12-31" onchange="validateDOB(this)">
+      <span id="dob-error" style="color:#c45c5c;font-size:12px;display:none;margin-top:4px;">Date of birth must be 2008 or earlier.</span>
     </div>
     <div class="field">
       <label>NI Number</label>
@@ -504,7 +505,17 @@ function updateTotalHours() {
   document.getElementById('totalHoursBadge').textContent = total + ' hrs';
 }
 
-function autoCalcDeduction() {
+function validateDOB(input) {
+  const error = document.getElementById('dob-error');
+  if (input.value && input.value > '2008-12-31') {
+    input.value = '';
+    error.style.display = 'block';
+  } else {
+    error.style.display = 'none';
+  }
+}
+
+
   const gross = parseFloat(document.getElementById('grossPaid').value) || 0;
   const mat = parseFloat(document.getElementById('materials').value) || 0;
   const auto = Math.round((gross - mat) * 0.20);
@@ -565,7 +576,7 @@ function generatePDF() {
   // -- Personal details table --
   const fields = [
     ['Name', get('name')],
-    ['D.O.B.', get('dob')],
+    ['D.O.B.', formatDisplayDate(get('dob'))],
     ['Address', get('address')],
     ['UTR Number', get('utr')],
     ['NI Number', get('nino')],
