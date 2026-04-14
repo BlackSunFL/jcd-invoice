@@ -290,6 +290,23 @@ text-transform: uppercase;
 color: var(–muted);
 }
 
+.find-btn {
+padding: 0 18px;
+background: var(–accent);
+color: white;
+border: none;
+border-radius: 10px;
+font-size: 14px;
+font-weight: 600;
+font-family: “DM Sans”, sans-serif;
+cursor: pointer;
+white-space: nowrap;
+flex-shrink: 0;
+min-height: 46px;
+}
+
+.find-btn:active { background: var(–accent2); }
+
 .toast {
 position: fixed;
 bottom: 90px;
@@ -367,14 +384,11 @@ z-index: 200;
   </div>
   <div class="field">
     <label>Postcode</label>
-    <div style="display:flex;gap:8px;">
-      <input type="text" id="postcodeInput" placeholder="e.g. UB6 0PL" style="text-transform:uppercase;flex:1;" oninput="this.value=this.value.toUpperCase()">
-      <button onclick="lookupPostcode()" style="padding:0 16px;background:var(--accent);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:&apos;DM Sans&apos;,sans-serif;cursor:pointer;white-space:nowrap;">Find</button>
+    <div style="display:flex;gap:8px;align-items:stretch;">
+      <input type="text" id="postcodeInput" placeholder="e.g. UB6 0PL" style="text-transform:uppercase;flex:1;min-width:0;" oninput="this.value=this.value.toUpperCase()">
+      <button type="button" onclick="lookupPostcode()" class="find-btn">Find</button>
     </div>
     <div id="postcode-status" style="font-size:12px;margin-top:6px;color:var(--muted);display:none;"></div>
-    <select id="addressSelect" style="margin-top:8px;display:none;" onchange="selectAddress(this.value)">
-      <option value="">— Select your address —</option>
-    </select>
   </div>
   <div class="field">
     <label>Address</label>
