@@ -382,7 +382,7 @@
       <div class="field">
         <label>Postcode</label>
         <div style="display:flex;gap:8px;align-items:stretch;">
-          <input type="text" id="postcodeInput" placeholder="e.g. UB6 0PL" style="text-transform:uppercase;flex:1;min-width:0;" oninput="this.value=this.value.toUpperCase()">
+          <input type="text" id="postcodeInput" placeholder="e.g. HP2 7PA" style="text-transform:uppercase;flex:1;min-width:0;" oninput="this.value=this.value.toUpperCase()">
           <button type="button" onclick="lookupPostcode()" class="find-btn">Find</button>
         </div>
         <div id="postcode-status" style="font-size:12px;margin-top:6px;color:var(--muted);display:none;"></div>
@@ -717,8 +717,8 @@ function generatePDF() {
   doc.text('J.C.D Group Ltd', margin + 70, y);
   doc.text('Phone: 01494 422936', margin + 70, y + 12);
   doc.text('E-mail: invoices@jcdryliningltd.co.uk', margin + 70, y + 24);
-  doc.text('Address: 1st Floor Office, Sovereign Park, Cleveland Way,', col2 + 20, y);
-  doc.text('Hemel Hempstead Industrial Estate, Hertfordshire, HP2 7DA', col2 + 20, y + 12);
+  doc.text('Address: 1st Floor Office, Sovereign Park, Cleveland Way,', col2 + 30, y);
+  doc.text('Hemel Hempstead Industrial Estate, Hertfordshire, HP2 7DA', col2 + 30, y + 12);
 
   y += 45;
 
